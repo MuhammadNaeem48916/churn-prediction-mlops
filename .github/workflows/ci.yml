@@ -1,0 +1,109 @@
+name: ML CI Pipeline
+
+# WHEN this runs
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+
+  # ─────────────────────────────────────────
+  # JOB 1: Lint and unit test — fast, fails early
+  # ─────────────────────────────────────────
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create dataset for testing
+        run: python src/create_dataset.py
+
+      - name: Run unit tests
+        run: pytest tests/test_train.py -v
+
+  # ─────────────────────────────────────────
+  # JOB 2: Train model and validate metrics
+  # Only runs if 'test' job succeeds
+  # ─────────────────────────────────────────
+  train-and-validate:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create dataset
+        run: python src/create_dataset.py
+
+      - name: Train model
+        run: python src/train.py logistic C=1.0
+
+      - name: Check metric thresholds
+        run: python tests/check_metrics.py
+
+      - name: Upload metrics as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-metrics
+          path: metrics/scores.json
+
+      - name: Upload confusion matrix as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: confusion-matrix
+          path: outputs/confusion_matrix_logistic.png
+
+  # ─────────────────────────────────────────
+  # JOB 3: Build Docker image
+  # Only runs if training AND metric gate pass
+  # ─────────────────────────────────────────
+  build-docker:
+    needs: train-and-validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build training image
+        run: docker build -f Dockerfile.train -t churn-training:${{ github.sha }} .
+
+      - name: Build serving image
+        run: docker build -f Dockerfile.serve -t churn-serving:${{ github.sha }} .
+
+      - name: Verify images built successfully
+        run: docker images | grep churn
+
+  # ─────────────────────────────────────────
+  # JOB 4: Summary — always runs, reports status
+  # ─────────────────────────────────────────
+  pipeline-summary:
+    needs: [test, train-and-validate, build-docker]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Report pipeline result
+        run: |
+          echo "Test job:               ${{ needs.test.result }}"
+          echo "Train+Validate job:      ${{ needs.train-and-validate.result }}"
+          echo "Docker build job:        ${{ needs.build-docker.result }}"
