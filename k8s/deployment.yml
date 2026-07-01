@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: churn-serving
+  namespace: ml-production
+  labels:
+    app: churn-serving
+    version: v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: churn-serving
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: churn-serving
+        version: v1
+    spec:
+      containers:
+      - name: churn-serving
+        image: churn-serving:v1
+        imagePullPolicy: Never      # use local image in minikube
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - configMapRef:
+            name: churn-config
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 3
+        volumeMounts:
+        - name: model-volume
+          mountPath: /app/models
+      volumes:
+      - name: model-volume
+        hostPath:
+          path: /mnt/e/8.Project/5_churn_prediction-kubernetes/models
+          type: Directory
