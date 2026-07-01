@@ -1,0 +1,13 @@
+data/
+models/
+outputs/
+mlruns/
+mlflow.db
+.git/
+.dvc/
+*.dvc
+__pycache__/
+.venv/
+venv/
+.pytest_cache/
+README.md
