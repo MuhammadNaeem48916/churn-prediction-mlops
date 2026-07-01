@@ -1,0 +1,23 @@
+*.pkl
+*.joblib
+!*.dvc
+!*.dvc/
+mlruns/
+mlflow.db
+outputd/
+cat > .gitignore <<"EOF"
+*.pkl
+*.joblib
+!*.dvc
+!*.dvc/
+mlruns/
+mlflow.db
+outputs/
+__pycache__/
+*.pyc
+.venv/
+venv
+.env
+.ipynb_checkpoints/
+.DS_Store
+.pytest_cache/
