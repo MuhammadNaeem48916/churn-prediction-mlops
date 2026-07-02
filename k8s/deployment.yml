@@ -52,11 +52,5 @@ spec:
           initialDelaySeconds: 30
           periodSeconds: 10
           failureThreshold: 3
-        volumeMounts:
-        - name: model-volume
-          mountPath: /app/models
-      volumes:
-      - name: model-volume
-        hostPath:
-          path: /mnt/e/8.Project/5_churn_prediction-kubernetes/models
-          type: Directory
+        
+  

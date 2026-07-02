@@ -11,6 +11,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/ ./src/
 
+# ADD THIS
+COPY models/ ./models/
+
 ENV PYTHONUNBUFFERED=1
 ENV MODEL_NAME=churn-logistic
 ENV MODEL_PATH=/app/models/model.pkl

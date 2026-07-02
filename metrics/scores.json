@@ -1,0 +1,9 @@
+{
+  "model_type": "logistic",
+  "accuracy": 0.99,
+  "f1_score": 0.9811,
+  "precision": 1.0,
+  "recall": 0.963,
+  "roc_auc": 0.9995,
+  "cv_roc_auc_mean": 0.9997
+}

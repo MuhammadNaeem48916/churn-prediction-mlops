@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="Churn Prediction API",
     description="Predicts customer churn probability",
-    version="1.0.0"
+    version="2.0.0"
 )
 
 MODEL_PATH  = os.getenv("MODEL_PATH", "models/model.pkl")
